@@ -1,0 +1,38 @@
+clc
+clear all
+
+global l1 w1 l2 w2 x0
+
+%%assume two link
+l1=.45;
+w1=1;
+l2=.55;
+w2-1;
+x0=[0, -.5]; %Base of robot at half an arm length toward user from center of workspace
+%Consequence: Workspace is a circle within the arm's semicircle of reach
+
+syms x y t theta1 theta2 real;
+theta=[theta1; theta2];
+p=[x; y];
+
+%fk=fkin(theta);
+%ik=ikin(p);
+
+t=0:.01:1;
+x=minjerk([0 0],[.4 .4],[0 0],[0 0],t);
+T=length(t);
+
+figure(1)
+clf
+hold on
+plot(x0(1),x0(2),'rx')
+for k=1:T
+    plot(x(1,k),x(2,k))
+    it=ikin(x(:,k)));
+    xt=fkin(it);
+    plot
+    plot(xt(1),xt(2),'r.')
+    
+    F(j)=getframe;
+    
+end
