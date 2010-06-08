@@ -1,14 +1,13 @@
-function x=minjerk(xi,xf,vi,duration,t)
+function [coeff]=calcminjerk(xi,xf,vi,vf,ai,af)
 %%goal use minimum jerk modeling
 %Assume:
 %-Shadmehr derived minimum jerk in 2d correctly
-%-Time *resets* for each submovement
+%-Time given as a vector inclusive of start and end times
 %-Start at xi with initial velocity (vi) and acceleration (ai), end at xf
 %with zero velocity and acceleration.
 
-TF=duration;
-
-t=0;
+TF=tlist(end);
+t=tlist(1);
 
 tmat=[1 t  t^2  t^3  t^4  t^5;
     1 TF TF^2 TF^3 TF^4 TF^5;
@@ -17,7 +16,9 @@ tmat=[1 t  t^2  t^3  t^4  t^5;
     0 0  2    6*t    12*t^2  20*t^3;
     0 0  2    6*TF   12*TF^2 20*TF^3];
 
-xconstraints=[xlist(listi,1); xf(1); vlist(listi,1); 0; alist(listi,1); 0];
-yconstraints=[xlist(listi,2); xf(2); vlist(listi,2); 0; alist(listi,2); 0];
+xconstraints=[xi(1); xf(1); vi(1); 0; ai(1); 0];
+yconstraints=[xi(2); xf(2); vi(2); 0; ai(2); 0];
 xcoeff=tmat\xconstraints;
 ycoeff=tmat\yconstraints;
+
+coeff=[xcoeff;ycoeff];
