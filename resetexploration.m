@@ -21,17 +21,14 @@ p=[x; y];
 fk=fkin(theta);
 ik=ikin(p);
 
-p0=[-.2 -.2];
-pf=[-.2 .1];
+p0=[.1 .3];
+pf=[-.1 0];
 
 global coeff
 
 coeff=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
 
 %Command torques based on Jacobian, so build one
-
-J2=[diff(ik(1),x,2),diff(ik(1),y,2);
-    diff(ik(2),x,2),diff(ik(2),y,2)];
 
 J=[diff(ik(1),x),diff(ik(1),y);
     diff(ik(2),x),diff(ik(2),y)];
@@ -41,14 +38,16 @@ J21=inline(vectorize(J(2,1)));
 J12=inline(vectorize(J(1,2)));
 J22=inline(vectorize(J(2,2)));
 
-J211=inline(vectorize(J2(1,1)));
-J221=inline(vectorize(J2(2,1)));
-J212=inline(vectorize(J2(1,2)));
-J222=inline(vectorize(J2(2,2)));
+Jt1dx2=inline(vectorize(diff(ik(1),x,2)));
+Jt1dy2=inline(vectorize(diff(ik(1),y,2)));
+Jt1dxdy=inline(vectorize(diff(diff(ik(1),x),y)));
+Jt2dx2=inline(vectorize(diff(ik(2),x,2)));
+Jt2dy2=inline(vectorize(diff(ik(2),y,2)));
+Jt2dxdy=inline(vectorize(diff(diff(ik(2),x),y)));
 
 global Jacobian
 
-Jacobian=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[J211(p(1),p(2)),J212(p(1),p(2));J221(p(1),p(2)),J222(p(1),p(2))]*v.^2;
+Jacobian=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(2);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(2)]*v;
 
 
 ini=ikin(p0);
