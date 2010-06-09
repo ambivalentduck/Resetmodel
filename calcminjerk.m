@@ -13,8 +13,8 @@ tmat=[1 t  t^2  t^3  t^4  t^5;
     0 0  2    6*t    12*t^2  20*t^3;
     0 0  2    6*TF   12*TF^2 20*TF^3];
 
-xconstraints=[xi(1); xf(1); vi(1); 0; ai(1); 0];
-yconstraints=[xi(2); xf(2); vi(2); 0; ai(2); 0];
+xconstraints=[xi(1); xf(1); vi(1); vf(1); ai(1); af(1)];
+yconstraints=[xi(2); xf(2); vi(2); vf(2); ai(2); af(2)];
 xcoeff=tmat\xconstraints;
 ycoeff=tmat\yconstraints;
 

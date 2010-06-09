@@ -35,4 +35,4 @@ fJt1dxdy=inline(vectorize(diff(diff(fk(1),x),y)));
 fJt2dxdy=inline(vectorize(diff(diff(fk(2),x),y)));
 
 fJacobian=@(p,v,a) [fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*v;
-fJacobian2=@(p,v,a)[fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(1);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(1)]*v;
+fJacobian2=@(p,v,a)[fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*a+[fJt1dx2(p(1),p(2))*v(1)+fJt1dxdy(p(1),p(2))*v(2),fJt1dy2(p(1),p(2))*v(2)+fJt1dxdy(p(1),p(2))*v(1);fJt2dx2(p(1),p(2))*v(1)+fJt2dxdy(p(1),p(2))*v(2),fJt2dy2(p(1),p(2))*v(2)+fJt2dxdy(p(1),p(2))*v(1)]*v;
