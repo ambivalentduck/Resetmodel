@@ -1,5 +1,12 @@
 function [Jacobian, Jacobian2, fJacobian, fJacobian2]=makeJacobians
 
+syms x y t theta1 theta2 real;
+theta=[theta1; theta2];
+p=[x; y];
+
+fk=fkin(theta);
+ik=ikin(p);
+
 J11=inline(vectorize(diff(ik(1),x)));
 J21=inline(vectorize(diff(ik(2),x)));
 J12=inline(vectorize(diff(ik(1),y)));
@@ -13,7 +20,7 @@ Jt1dxdy=inline(vectorize(diff(diff(ik(1),x),y)));
 Jt2dxdy=inline(vectorize(diff(diff(ik(2),x),y)));
 
 Jacobian=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*v;
-Jacobian2=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(2);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(2)]*v;
+Jacobian2=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(1);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(1)]*v;
 
 fJ11=inline(vectorize(diff(fk(1),x)));
 fJ21=inline(vectorize(diff(fk(2),x)));
@@ -28,4 +35,4 @@ fJt1dxdy=inline(vectorize(diff(diff(fk(1),x),y)));
 fJt2dxdy=inline(vectorize(diff(diff(fk(2),x),y)));
 
 fJacobian=@(p,v,a) [fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*v;
-fJacobian2=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(2);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(2)]*v;
+fJacobian2=@(p,v,a)[fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(1);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(1)]*v;
