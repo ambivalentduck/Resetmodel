@@ -19,7 +19,19 @@ fk=fkin(theta);
 ik=ikin(p);
 
 t=0:.01:1;
-x=minjerk([-.2 -.2],[.2 .2],[0 0],[0 0],t);
+xd=minjerk([-.2 -.2],[.2 .2],[0 0],[0 0],t);
 T=length(t);
-rxpast=zeros(2,T);
 
+%Command torques based on Jacobian, so build one
+J1=[diff(ik(1),x),diff(ik(1),y);
+    diff(ik(2),x),diff(ik(2),y)];
+
+J2=[diff(ik(1),x,2),diff(ik(1),y,2);
+    diff(ik(2),x,2),diff(ik(2),y,2)];
+
+%write J2 to a file
+fid=fopen('J2.m','w');
+
+
+
+% J2 is d2_ik/dp2, so J2*a is d2_ik/dt2 via chain rule
