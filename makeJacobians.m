@@ -1,10 +1,9 @@
 function [Jacobian, Jacobian2, fJacobian, fJacobian2]=makeJacobians
 
-syms x y t theta1 theta2 real;
-theta=[theta1; theta2];
+syms x y real;
 p=[x; y];
 
-fk=fkin(theta);
+fk=fkin(p);
 ik=ikin(p);
 
 J11=inline(vectorize(diff(ik(1),x)));
@@ -33,6 +32,6 @@ fJt2dx2=inline(vectorize(diff(fk(2),x,2)));
 fJt2dy2=inline(vectorize(diff(fk(2),y,2)));
 fJt1dxdy=inline(vectorize(diff(diff(fk(1),x),y)));
 fJt2dxdy=inline(vectorize(diff(diff(fk(2),x),y)));
-
+%Note that these "p, v, and a" are now actually theta, omega, and alpha.
 fJacobian=@(p,v,a) [fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*v;
 fJacobian2=@(p,v,a)[fJ11(p(1),p(2)),fJ12(p(1),p(2));fJ21(p(1),p(2)),fJ22(p(1),p(2))]*a+[fJt1dx2(p(1),p(2))*v(1)+fJt1dxdy(p(1),p(2))*v(2),fJt1dy2(p(1),p(2))*v(2)+fJt1dxdy(p(1),p(2))*v(1);fJt2dx2(p(1),p(2))*v(1)+fJt2dxdy(p(1),p(2))*v(2),fJt2dy2(p(1),p(2))*v(2)+fJt2dxdy(p(1),p(2))*v(1)]*v;

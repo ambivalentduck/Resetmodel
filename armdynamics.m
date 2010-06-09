@@ -14,14 +14,14 @@ else
 end
 
 for k=1:K
-    if(coeff{k}.expiration<=t)
-        [p,v,a]=minjerk(coeff{k}.vals,t);
+    if(coeff(k).expiration<=t)
+        [p,v,a]=minjerk(coeff(k).vals,t);
     else
-        [p,v,a]=minjerk(coeff{k}.vals,coeff{k}.expiration); %Final values stand forever
+        [p,v,a]=minjerk(coeff(k).vals,coeff(k).expiration); %Final values stand forever
     end
     % J is d2_theta/dp2, a is d2p/dt2, so J*a is d2_theta/dt2 via chain rule
     if((reset>=2)||(k==1)) %Ie. Type >=2 reset includes superposition well-evidenced in literature
-        alpha=alpha+Jacobian2(p,v,a)*(coeff{k}.expiration<=t);
+        alpha=alpha+Jacobian2(p,v,a)*(coeff(k).expiration<=t);
     end
 end
 
@@ -40,7 +40,7 @@ c2=cos(x(2));
 
 %Copy the mechanics from Jim's code...
 I=[z(3)+z(4)*c2, z(2)+z(1)*c2;
-    z(2)+z(1)*c2, z2];
+    z(2)+z(1)*c2, z(2)];
 
 inter=z(1)*sin(x(2));
 g=[-inter*(x(4)^2+2*x(3)*x(4));
@@ -56,8 +56,8 @@ dx=[x(3);
 %acceleration instead.  Why bother adding numerical noise by multiplying alpha terms by I*I^-1 ?
 
 p_real=fkin(x(1:2));
-v_real=fJacobian(x);
-a_real=fJacobian2([x;dx(3:4)]);
+v_real=fJacobian(x(1:2),x(3:4),[0 0]);
+a_real=fJacobian2(x(1:2),x(3:4),dx(3:4));
 e=sum((p_real-p).^2); %Note that this p is always from the most "updated" ff trajectory and only it
 if( (e>.1)&&(e>lasterror)&&(reset>=1) ) %Reset Condition + getting worse + reset desired
     coeff{end+1}=calcminjerk(p_real,pf,v_real,[0 0],a_real,[0 0],t,t+1);
