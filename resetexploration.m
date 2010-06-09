@@ -1,13 +1,24 @@
 clc
 clear all
 
-global l1 l2 I1 I2 x0
+global l1 l2 w1 w2 z x0 lasterror pf coeff Jacobian Jacobian2
+
+lasterror=inf;
 
 %%assume two link
 l1=.5;
 l2=.5;
-I1=1;
-I2=1;
+w1=1;
+w2=1;
+%model as solid rod
+I1=(w1*l1^2)/3;
+I2=(w2*l2^2)/3;
+
+z=[w2*l1*(l2/2);
+   I2+w2*(l2/2)^2;
+   I1+I2+(w1*l1^2+w2*l2^2)/4+w2*l1^2;
+   w2*l1*l2];
+
 x0=[0, -.5]; %Base of robot at half an arm length toward user from center of workspace
 %Consequence: Workspace is a circle within the arm's semicircle of reach
 
@@ -24,9 +35,7 @@ ik=ikin(p);
 p0=[.1 .2];
 pf=[.1 -.2];
 
-global coeff
-
-coeff=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
+coeff{1}=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
 
 %Command torques based on Jacobian, so build one
 
@@ -45,14 +54,12 @@ Jt2dx2=inline(vectorize(diff(ik(2),x,2)));
 Jt2dy2=inline(vectorize(diff(ik(2),y,2)));
 Jt2dxdy=inline(vectorize(diff(diff(ik(2),x),y)));
 
-global Jacobian Jacobian2
-
 Jacobian=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*v;
 Jacobian2=@(p,v,a) [J11(p(1),p(2)),J12(p(1),p(2));J21(p(1),p(2)),J22(p(1),p(2))]*a+[Jt1dx2(p(1),p(2))*v(1)+Jt1dxdy(p(1),p(2))*v(2),Jt1dy2(p(1),p(2))*v(2)+Jt1dxdy(p(1),p(2))*v(2);Jt2dx2(p(1),p(2))*v(1)+Jt2dxdy(p(1),p(2))*v(2),Jt2dy2(p(1),p(2))*v(2)+Jt2dxdy(p(1),p(2))*v(2)]*v;
 
 
 ini=ikin(p0);
-[T,X]=ode45(@armdynamics,[0 1],[ini;0;0]);
+[T,X]=ode45(@armdynamics,[0 2],[ini;0;0]);
 
 LT=length(T);
 command=zeros(2,LT);
