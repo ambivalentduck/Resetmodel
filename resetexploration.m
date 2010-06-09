@@ -1,23 +1,23 @@
 clc
 clear all
 
-global l1 l2 z x0 lasterror pf coeff reset Jacobian Jacobian2 fJacobian fJacobian2
+global l1 l2 m1 m2 I1 I2 z x0 lasterror pf coeff reset Jacobian Jacobian2 fJacobian fJacobian2
 
 lasterror=inf;
 
 %%assume two link
 l1=.5;
 l2=.5;
-w1=1;
-w2=1;
+m1=1;
+m2=1;
 %model as solid rod
-I1=(w1*l1^2)/3;
-I2=(w2*l2^2)/3;
+I1=(m1*l1^2)/3;
+I2=(m2*l2^2)/3;
 
-z=[w2*l1*(l2/2);
-    I2+w2*(l2/2)^2;
-    I1+I2+(w1*l1^2+w2*l2^2)/4+w2*l1^2;
-    w2*l1*l2];
+z=[m2*l1*(l2/2);
+    I2+m2*(l2/2)^2;
+    I1+I2+(m1*l1^2+m2*l2^2)/4+m2*l1^2;
+    m2*l1*l2];
 
 x0=[0, -.5]; %Base of robot at half an arm length toward user from center of workspace
 %Consequence: Workspace is a circle within the arm's semicircle of reach
@@ -30,9 +30,12 @@ pf=[.1 -.2];
 
 coeff(1).vals=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
 coeff(1).expiration=tf;
+coeff(1).stale=inf;
 
 %Command torques based on Jacobian, so build one
 [Jacobian, Jacobian2, fJacobian, fJacobian2]=makeJacobians;
+
+C=1;
 
 for reset=0 %:2
     ini=ikin(p0);
@@ -55,7 +58,14 @@ for reset=0 %:2
         plot(joint1(1,1:k),joint1(2,1:k),'g.')
         plot(armpos(1,1:k),armpos(2,1:k),'g.')
 
-        command(:,k)=minjerk(coeff{1},T(k));
+        if T(k)>coeff(C).stale
+            C=C+1;
+        end
+        if T(k)>coeff(C).expiration
+            command(:,k)=minjerk(coeff(C).vals,coeff(C).expiration);
+        else
+            command(:,k)=minjerk(coeff(C).vals,T(k));
+        end
         plot(command(1,1:k),command(2,1:k),'r-')
         plot(command(1,k),command(2,k),'rx')
 
