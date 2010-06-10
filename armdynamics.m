@@ -11,8 +11,14 @@ else
     K=1;
 end
 
+if (reset>=3)
+    one=K;
+else
+    one=1;
+end
+
 alpha=0;
-for k=1:K
+for k=one:K
     if(coeff(k).expiration>=t)
         [p,v,a]=minjerk(coeff(k).vals,t);
     else
@@ -88,5 +94,5 @@ end
 end
 
 function out=getforces(t)
-out=[0;30]*((t<.25)&&(t>.2))+[0;-10]*((t<.30)&&(t>.25));
+out=[0;-30]*((t<.25)&&(t>.2))+[0;30]*((t<.30)&&(t>.25));
 end

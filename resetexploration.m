@@ -33,16 +33,15 @@ coeff(1).stale=inf;
 %Command torques based on Jacobian, so build one
 [Jacobian, Jacobian2, fJacobian, fJacobian2]=makeJacobians;
 
-titles={'Type 0 Reset: None','Type 1 Reset: feedback control sees updated trajectory','Type 2 Reset: Feedback Updated and corrective submovement initiated'};
+titles={'Type 0 Reset: None','Type 1 Reset: feedback control sees updated trajectory','Type 2 Reset: Feedback Updated and corrective submovement initiated','Type 3: Feedback updated and corrective submovement supercedes prior feedforward.'};
 
-for res=0:2
-    C=1;
+for res=0:3
     lastreset=-inf;
     coeff=cell(0);
     coeff(1).vals=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
     coeff(1).expiration=tf;
     coeff(1).stale=inf;
-    
+
     reset=res;
     ini=ikin(p0);
     %[T,X]=ode45(@armdynamics,[0 3],[ini;0;0]);
@@ -54,6 +53,8 @@ for res=0:2
     joint1=zeros(2,LT);
 
     figure(reset+1)
+    first=1;
+    C=1;
     for k=1:length(T)
         clf
         hold on
@@ -66,27 +67,57 @@ for res=0:2
         plot(armpos(1,1:k),armpos(2,1:k),'g.')
 
         while T(k)>coeff(C).stale
+            coeff(C).final=command(:,first:k-1);
             C=C+1;
+            first=k;
         end
+
         if T(k)>coeff(C).expiration
             command(:,k)=minjerk(coeff(C).vals,coeff(C).expiration);
         else
             command(:,k)=minjerk(coeff(C).vals,T(k));
         end
-        plot(command(1,1:k),command(2,1:k),'r-')
+        plot(command(1,first:k),command(2,first:k),'r-')
         plot(command(1,k),command(2,k),'rx')
 
+
+        for c=1:C-1
+            plot(coeff(c).final(1,:),coeff(c).final(2,:),'r-')
+        end
 
         set(gca,'xlim',[-1,1]);
         set(gca,'ylim',[-1,1]);
         F(k)=getframe; %#ok<AGROW>
     end
+
+    clf
+    hold on
+
+    [armpos(:,k),joint1(:,k)]=fkin(X(k,1:2));
+    plot(armpos(1,1:k),armpos(2,1:k),'g.')
+
+    if T(k)>coeff(C).expiration
+        command(:,k)=minjerk(coeff(C).vals,coeff(C).expiration);
+    else
+        command(:,k)=minjerk(coeff(C).vals,T(k));
+    end
+    plot(command(1,first:k),command(2,first:k),'r-')
+    plot(command(1,k),command(2,k),'rx')
+
+    for c=1:C-1
+        plot(coeff(c).final(1,:),coeff(c).final(2,:),'r-')
+    end
+
+    set(gca,'xlim',[-1,1]);
+    set(gca,'ylim',[-1,1]);
+    F(k)=getframe; %#ok<AGROW>
+
     title(titles{reset+1})
     if (C-1)==1
         xlabel('There was 1 reset.')
     else
         xlabel(['There were ',num2str(C-1),' resets.'])
     end
-    print('-djpeg',['/home/web/Reset_Plots/reset',num2str(reset),'.jpg'])
+    print('-djpeg',['/home/web/Reset_Plots/reset_down-up_',num2str(reset),'.jpg'])
     %movie(F)
 end
