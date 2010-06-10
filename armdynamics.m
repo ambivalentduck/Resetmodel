@@ -1,6 +1,6 @@
 function dx=armdynamics(t,x)
 
-global l1 l2 m1 m2 I1 I2 z coeff pf Jacobian Jacobian2 fJacobian fJacobian2 reset lasterror
+global l1 l2 m1 m2 I1 I2 z coeff pf Jacobian Jacobian2 fJacobian fJacobian2 reset lastreset
 
 %x(1-2) are joint angle
 %x(3-4) are velocity
@@ -20,6 +20,7 @@ for k=1:K
     end
     % J is d2_theta/dp2, a is d2p/dt2, so J*a is d2_theta/dt2 via chain rule
     if((reset>=2)||(k==1)) %Ie. Type >=2 reset includes superposition well-evidenced in literature
+        %alpha=alpha+Jacobian2(p,v,a)*(coeff(k).expiration>=t);
         alpha=alpha+Jacobian2(p,v,a)*(coeff(k).expiration>=t);
     end
 end
@@ -28,7 +29,7 @@ end
 omega_desired=Jacobian(p,v,a);
 theta_desired=ikin(p);
 kd=-10;
-kp=-50;
+kp=-10;
 alpha=alpha+kd*(x(3:4)-omega_desired)+kp*(x(1:2)-theta_desired);
 
 %Turn alpha into a torque, eq. 7.87 in Spong's Robot Control and Modeling
@@ -63,24 +64,29 @@ torque_outside=[(-l1*sin(x(1))-l2*sin(12))*F(1)+(l1*cos(x(1))+l2*c12)*F(2);
 dx=[x(3);
     x(4);
     inv(I)*(torque_ff+torque_outside-g)];
-    
-%I assume a *perfect* inverse model to produce the right torque and just specify angular
-%acceleration instead.  Why bother adding numerical noise by multiplying alpha terms by I*I^-1 ?
 
 p_real=fkin(x(1:2));
-v_real=fJacobian(x(1:2),x(3:4),[0 0]);
+v_real=fJacobian(x(1:2),x(3:4),dx(3:4));
 a_real=fJacobian2(x(1:2),x(3:4),dx(3:4));
-e=sum((p_real-p).^2); %Note that this p is always from the most "updated" ff trajectory and only it
-if( (e>.1)&&(e>lasterror)&&(reset>=1) ) %Reset Condition + getting worse + reset desired
-    coeff(end).stale=t;
-    coeff(end+1).vals=calcminjerk(p_real,pf,v_real,[0 0],a_real,[0 0],t,t+1);
-    coeff(end+1).expiration=t+1;
-    coeff(end+1).stale=inf;
+e=sqrt(sum((p_real-p).^2)); %Note that this p is always from the most "updated" ff trajectory and only from it
+
+if (e>.2)&&((t-lastreset)>.5)&&(reset>=1) %Reset Condition + at least 500 ms + reset desired
+    coeff(K).stale=t;
+    coeff(K+1).vals=calcminjerk(p_real,pf,v_real,[0 0],a_real,[0 0],t,t+1);
+    coeff(K+1).expiration=t+1;
+    coeff(K+1).stale=inf;
+    disp 'Reset Happened.'
+    lastreset=t;
+elseif (e>.2)&&(reset>=1)&&(~sum(imag(dx)))
+    disp(['Error:',num2str(e),', but t diff:',num2str(t-lastreset),' Abs t=',num2str(t)]);
+end
+
+if sum(imag(dx)) %if things get stupid, stop moving so the solver will at least show you what went wrong.
+    dx=zeros(4,1);
 end
 
 end
-
 
 function out=getforces(t)
-out=[0; 0]; %out=[500;0]*((t<.55)&&(t>.5));
+out=[20;0]*((t<.25)&&(t>.2));
 end

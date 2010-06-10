@@ -1,13 +1,11 @@
 clc
 clear all
 
-global l1 l2 m1 m2 I1 I2 z x0 lasterror pf coeff reset Jacobian Jacobian2 fJacobian fJacobian2
-
-lasterror=inf;
+global l1 l2 m1 m2 I1 I2 z x0 lastreset pf coeff reset Jacobian Jacobian2 fJacobian fJacobian2
 
 %%assume two link
-l1=.5;
-l2=.5;
+l1=1;
+l2=1;
 m1=1;
 m2=1;
 %model as solid rod
@@ -25,8 +23,8 @@ x0=[0, -.5]; %Base of robot at half an arm length toward user from center of wor
 ti=0;
 tf=1;
 
-p0=[.1 .2];
-pf=[.1 -.2];
+p0=[.2 0];
+pf=[-.2 0];
 
 coeff(1).vals=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
 coeff(1).expiration=tf;
@@ -35,9 +33,17 @@ coeff(1).stale=inf;
 %Command torques based on Jacobian, so build one
 [Jacobian, Jacobian2, fJacobian, fJacobian2]=makeJacobians;
 
-C=1;
+titles={'Type 0 Reset: None','Type 1 Reset: feedback control sees updated trajectory','Type 2 Reset: Feedback Updated and corrective submovement initiated'};
 
-for reset=0 %:2
+for res=0:2
+    C=1;
+    lastreset=-inf;
+    coeff=cell(0);
+    coeff(1).vals=calcminjerk(p0,pf,[0 0],[0 0],[0 0],[0 0],ti,tf);
+    coeff(1).expiration=tf;
+    coeff(1).stale=inf;
+    
+    reset=res;
     ini=ikin(p0);
     [T,X]=ode45(@armdynamics,[0 3],[ini;0;0]);
 
@@ -55,10 +61,10 @@ for reset=0 %:2
         plot(x0(1),x0(2),'bx')
         plot([x0(1), joint1(1,k)],[x0(2), joint1(2,k)],'b-')
         plot([joint1(1,k),armpos(1,k)],[joint1(2,k),armpos(2,k)],'b-')
-        plot(joint1(1,1:k),joint1(2,1:k),'g.')
+        %plot(joint1(1,1:k),joint1(2,1:k),'g.')
         plot(armpos(1,1:k),armpos(2,1:k),'g.')
 
-        if T(k)>coeff(C).stale
+        while T(k)>coeff(C).stale
             C=C+1;
         end
         if T(k)>coeff(C).expiration
@@ -74,5 +80,12 @@ for reset=0 %:2
         set(gca,'ylim',[-1,1]);
         F(k)=getframe; %#ok<AGROW>
     end
-    movie(F)
+    title(titles{reset+1})
+    if (C-1)==1
+        xlabel('There was 1 reset.')
+    else
+        xlabel(['There were ',num2str(C-1),' resets.'])
+    end
+    print('-djpeg',['/home/web/Reset_Plots/reset',num2str(reset),'.jpg'])
+    %movie(F)
 end
