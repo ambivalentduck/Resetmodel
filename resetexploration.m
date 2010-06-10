@@ -45,7 +45,8 @@ for res=0:2
     
     reset=res;
     ini=ikin(p0);
-    [T,X]=ode45(@armdynamics,[0 3],[ini;0;0]);
+    %[T,X]=ode45(@armdynamics,[0 3],[ini;0;0]);
+    [T,X]=eulerode(@armdynamics,[0 3],[ini;0;0]);
 
     LT=length(T);
     command=zeros(2,LT);
