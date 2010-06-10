@@ -1,9 +1,0 @@
-function theta=ikin(x)
-
-global l1 l2 x0
-
-
-theta2=pi-acos(((x(1)-x0(1))^2+(x(2)-x0(2))^2-l1^2-l2^2)/(2*l1*l2));
-theta1=atan2(x(2)-x0(2),x(1)-x0(1)); %+theta2;
-
-theta=[theta1; theta2];
