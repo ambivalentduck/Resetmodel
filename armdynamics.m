@@ -1,4 +1,4 @@
-function dx=armdynamics(t,x)
+function [dx, a_real, F]=armdynamics(t,x)
 
 global l1 l2 m1 m2 I1 I2 z coeff pf Jacobian Jacobian2 fJacobian fJacobian2 reset lastreset
 
@@ -76,15 +76,13 @@ v_real=fJacobian(x(1:2),x(3:4),dx(3:4));
 a_real=fJacobian2(x(1:2),x(3:4),dx(3:4));
 e=sqrt(sum((p_real-p).^2)); %Note that this p is always from the most "updated" ff trajectory and only from it
 
-if (e>.05)&&((t-lastreset)>.5)&&(reset>=1) %Reset Condition + at least 500 ms + reset desired
+if (e>.03)&&((t-lastreset)>.5)&&(reset>=1) %Reset Condition + at least 500 ms + reset desired
     coeff(K).stale=t;
     coeff(K+1).vals=calcminjerk(p_real,pf,v_real,[0 0],a_real,[0 0],t,t+1);
     coeff(K+1).expiration=t+1;
     coeff(K+1).stale=inf;
     disp 'Reset Happened.'
     lastreset=t;
-elseif (e>.05)&&(reset>=1)&&(~sum(imag(dx)))
-    disp(['Error:',num2str(e),', but t diff:',num2str(t-lastreset),' Abs t=',num2str(t)]);
 end
 
 if sum(imag(dx)) %if things get stupid, stop moving so the solver will at least show you what went wrong.
